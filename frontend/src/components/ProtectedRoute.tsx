@@ -13,11 +13,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true,
   adminOnly = false,
 }) => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while checking auth status
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="loading">
         <div className="loading__spinner"></div>

@@ -56,7 +56,24 @@ app.use(
 );
 
 // Set security HTTP headers
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "http://localhost:5173",
+          "http://localhost:3000",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+        fontSrc: ["'self'", "https:", "data:"],
+      },
+    },
+  })
+);
 
 // Data sanitization against NoSQL query injection
 app.use((req: Request, res: Response, next: NextFunction) => {

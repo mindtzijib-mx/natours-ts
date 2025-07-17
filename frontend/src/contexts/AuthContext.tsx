@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { apiService } from "../services/api";
 import type { User } from "../services/api";
@@ -11,18 +11,29 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const initializingRef = useRef(false);
 
   useEffect(() => {
     const initializeAuth = async () => {
+      if (initializingRef.current) {
+        return;
+      }
+
+      initializingRef.current = true;
+
       const token = localStorage.getItem("token");
+
       if (token && apiService.isAuthenticated()) {
         try {
           const response = await apiService.getMe();
-          setUser(response.data);
+          setUser(response.data.data);
         } catch (error) {
           console.error("Failed to get user data:", error);
           apiService.logout();
+          setUser(null);
         }
+      } else {
+        setUser(null);
       }
       setLoading(false);
     };
@@ -52,9 +63,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const updateUser = async (userData: { name?: string; email?: string }) => {
-    const response = await apiService.updateUserData(userData);
-    setUser(response.data.user);
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
   };
 
   const updatePassword = async (passwordData: {

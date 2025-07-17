@@ -12,7 +12,7 @@ export interface AuthContextType {
     passwordConfirm: string;
   }) => Promise<void>;
   logout: () => void;
-  updateUser: (userData: { name?: string; email?: string }) => Promise<void>;
+  updateUser: (user: User) => void;
   updatePassword: (passwordData: {
     passwordCurrent: string;
     password: string;

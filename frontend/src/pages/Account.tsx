@@ -15,7 +15,7 @@ interface PasswordData {
 }
 
 const Account: React.FC = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -52,6 +52,12 @@ const Account: React.FC = () => {
       setError(errorMessage);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePhotoUpdate = (newPhoto: string) => {
+    if (user) {
+      updateUser({ ...user, photo: newPhoto });
     }
   };
 
@@ -95,14 +101,23 @@ const Account: React.FC = () => {
           )}
         </nav>
 
-        {user && (
+        {loading ? (
+          <div className="user-view__content">
+            <div className="loading">Loading user data...</div>
+          </div>
+        ) : user ? (
           <AccountForm
             user={user}
             onUpdateUserData={handleUpdateUserData}
             onUpdatePassword={handleUpdatePassword}
+            onPhotoUpdate={handlePhotoUpdate}
             isLoading={isLoading}
             error={error}
           />
+        ) : (
+          <div className="user-view__content">
+            <div className="error">Please log in to view your account.</div>
+          </div>
         )}
       </div>
     </main>

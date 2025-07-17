@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface User {
   name: string;
   email: string;
-  photo: string;
+  photo: string | undefined;
 }
 
 interface UserData {
@@ -21,6 +21,7 @@ interface AccountFormProps {
   user: User;
   onUpdateUserData: (data: UserData) => void;
   onUpdatePassword: (data: PasswordData) => void;
+  onPhotoUpdate?: (newPhoto: string) => void;
   isLoading?: boolean;
   error?: string;
 }
@@ -29,12 +30,13 @@ const AccountForm: React.FC<AccountFormProps> = ({
   user,
   onUpdateUserData,
   onUpdatePassword,
+  onPhotoUpdate,
   isLoading = false,
   error,
 }) => {
   const [userData, setUserData] = useState<UserData>({
-    name: user.name,
-    email: user.email,
+    name: user.name || "",
+    email: user.email || "",
   });
 
   const [passwordData, setPasswordData] = useState<PasswordData>({
@@ -47,6 +49,29 @@ const AccountForm: React.FC<AccountFormProps> = ({
   const [passwordErrors, setPasswordErrors] = useState<Partial<PasswordData>>(
     {}
   );
+
+  // Photo upload states
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [photoTimestamp, setPhotoTimestamp] = useState<number>(Date.now());
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update local state when user data changes
+  useEffect(() => {
+    if (user) {
+      setUserData({
+        name: user.name || "",
+        email: user.email || "",
+      });
+    }
+  }, [user]);
+
+  // Update photo timestamp when user photo changes
+  useEffect(() => {
+    if (user?.photo) {
+      setPhotoTimestamp(Date.now());
+    }
+  }, [user?.photo]);
 
   const validateUserData = (): boolean => {
     const errors: Partial<UserData> = {};
@@ -138,6 +163,87 @@ const AccountForm: React.FC<AccountFormProps> = ({
     }
   };
 
+  // Photo upload functions
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validar que sea una imagen
+      if (!file.type.startsWith("image/")) {
+        alert("Por favor selecciona solo archivos de imagen");
+        return;
+      }
+
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La imagen debe ser menor a 5MB");
+        return;
+      }
+
+      // Crear preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewPhoto(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Subir archivo
+      uploadPhoto(file);
+    }
+  };
+
+  const uploadPhoto = async (file: File) => {
+    setIsUploadingPhoto(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const token = localStorage.getItem("token"); // Asume que tienes el token guardado
+
+      const response = await fetch(
+        "http://localhost:3000/api/v1/users/updateMe",
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al subir la foto");
+      }
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        const newPhotoUrl = data.data.user.photo;
+        onPhotoUpdate?.(newPhotoUrl);
+        setPreviewPhoto(null); // Clear preview since we now have the new photo
+        setPhotoTimestamp(Date.now()); // Update timestamp to force image refresh
+        alert("Foto actualizada exitosamente!");
+      }
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Error al subir la foto. Inténtalo de nuevo.");
+      setPreviewPhoto(null);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const getPhotoUrl = () => {
+    if (previewPhoto) return previewPhoto;
+    const photoName = user.photo || "default.jpg";
+    // Use the new API endpoint that handles CORS properly
+    return `http://localhost:3000/api/v1/users/photo/${photoName}?t=${photoTimestamp}`;
+  };
+
   return (
     <div className="user-view__content">
       {error && <div className="alert alert--error">{error}</div>}
@@ -191,12 +297,29 @@ const AccountForm: React.FC<AccountFormProps> = ({
           <div className="form__group form__photo-upload">
             <img
               className="form__user-photo"
-              src={`/img/users/${user.photo}`}
+              src={getPhotoUrl()}
               alt="User photo"
+              style={{
+                opacity: isUploadingPhoto ? 0.6 : 1,
+                transition: "opacity 0.3s ease",
+              }}
             />
-            <a href="#" className="btn-text">
-              Choose new photo
-            </a>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
+              disabled={isUploadingPhoto}
+            />
+            <button
+              type="button"
+              className="btn-text"
+              onClick={handlePhotoClick}
+              disabled={isUploadingPhoto}
+            >
+              {isUploadingPhoto ? "Uploading..." : "Choose new photo"}
+            </button>
           </div>
 
           <div className="form__group right">

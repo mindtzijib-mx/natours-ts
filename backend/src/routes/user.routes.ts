@@ -14,9 +14,13 @@ import {
   deleteUser,
   getAllUsers,
   getMe,
+  getMyPhoto,
   getUser,
+  getUserPhoto,
+  resizeUserPhoto,
   updateMe,
   updateUser,
+  uploadUserPhoto,
 } from "../controllers/user.controller";
 
 const router = express.Router();
@@ -27,13 +31,17 @@ router.post("/login", login);
 router.post("/forgotPassword", forgotPassword);
 router.patch("/resetPassword/:token", resetPassword);
 
+// Public route for serving user photos
+router.get("/photo/:filename", getUserPhoto);
+
 // Apply protect middleware to all routes below this point
 router.use(protect);
 
 // Protected user routes (require authentication)
 router.patch("/updateMyPassword", updatePassword);
 router.get("/me", getMe, getUser);
-router.patch("/updateMe", updateMe);
+router.get("/me/photo", getMyPhoto);
+router.patch("/updateMe", uploadUserPhoto, resizeUserPhoto, updateMe);
 router.delete("/deleteMe", deleteMe);
 
 router.use(restrictTo("admin"));

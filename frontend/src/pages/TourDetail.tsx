@@ -112,7 +112,9 @@ const TourDetail: React.FC = () => {
                 <div className="overview-box__detail" key={guide._id}>
                   <img
                     className="overview-box__img"
-                    src={`/users/${guide.photo || "default.jpg"}`}
+                    src={`http://localhost:3000/api/v1/users/photo/${
+                      guide.photo || "default.jpg"
+                    }`}
                     alt={guide.name}
                   />
                   <span className="overview-box__label">{guide.name}</span>

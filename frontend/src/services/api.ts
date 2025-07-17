@@ -211,11 +211,11 @@ class ApiService {
   }
 
   // User endpoints
-  async getMe(): Promise<ApiResponse<User>> {
+  async getMe(): Promise<ApiResponse<{ data: User }>> {
     const response = await fetch(`${API_BASE_URL}/users/me`, {
       headers: this.getAuthHeaders(),
     });
-    return this.handleResponse<ApiResponse<User>>(response);
+    return this.handleResponse<ApiResponse<{ data: User }>>(response);
   }
 
   // Upload endpoints

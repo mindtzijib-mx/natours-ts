@@ -4,15 +4,13 @@ import { useAuth } from "../hooks/useAuth";
 import type { User } from "../services/api";
 
 const Header: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   // Function to get user image with fallback
   const getUserImage = (user: User) => {
-    if (user.photo) {
-      return `/users/${user.photo}`;
-    }
-    // Return default user image
-    return "/users/default.jpg";
+    const photoName = user.photo || "default.jpg";
+    // Use the new API endpoint that handles CORS properly
+    return `http://localhost:3000/api/v1/users/photo/${photoName}`;
   };
 
   return (
@@ -41,10 +39,13 @@ const Header: React.FC = () => {
                 onError={(e) => {
                   // Fallback to default image if the user image fails to load
                   const target = e.target as HTMLImageElement;
-                  target.src = "/users/default.jpg";
+                  target.src =
+                    "http://localhost:3000/api/v1/users/photo/default.jpg";
                 }}
               />
-              <span>{user.name.split(" ")[0]}</span>
+              <span>
+                {loading ? "Loading..." : user.name?.split(" ")[0] || "User"}
+              </span>
             </Link>
           </>
         ) : (

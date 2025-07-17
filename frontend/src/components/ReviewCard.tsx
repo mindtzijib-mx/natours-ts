@@ -21,7 +21,9 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
       <div className="reviews__avatar">
         <img
           className="reviews__avatar-img"
-          src={`/img/users/${review.user.photo}`}
+          src={`http://localhost:3000/api/v1/users/photo/${
+            review.user.photo || "default.jpg"
+          }`}
           alt={review.user.name}
         />
         <h6 className="reviews__user">{review.user.name}</h6>
